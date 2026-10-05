@@ -59,3 +59,26 @@ def test_searcher_collection_uses_backend_dim():
     """Regression: the collection was created from a hard-coded EMBED_DIM."""
     from app import search
     assert search.EMBED_DIM == Embedder().dim
+
+
+def test_searcher_reuses_query_embeddings():
+    """Repeated traffic should not rerun the ONNX model for an identical query."""
+    from app.search import Searcher
+
+    class CountingEmbedder:
+        def __init__(self):
+            self.calls = 0
+
+        def embed(self, texts):
+            self.calls += 1
+            yield np.asarray([0.1, 0.2, 0.3], dtype=np.float32)
+
+    searcher = Searcher()
+    embedder = CountingEmbedder()
+    searcher.embedder = embedder
+
+    first = searcher._embed_query("truy vấn lặp lại")
+    second = searcher._embed_query("truy vấn lặp lại")
+
+    assert first == second
+    assert embedder.calls == 1

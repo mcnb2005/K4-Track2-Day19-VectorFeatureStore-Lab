@@ -185,7 +185,9 @@ else:
 import pandas as pd
 entity_df = pd.DataFrame({
     "user_id": ["u_001", "u_002", "u_003"],
-    "event_timestamp": [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+    # Query after each user's source event (u_001/u_002/u_003 are 1/2/3h old)
+    # so the PIT join has one valid historical row for every requested entity.
+    "event_timestamp": [NOW - timedelta(minutes=30)] * 3,
 })
 
 historical = fs.get_historical_features(
